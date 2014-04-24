@@ -1,0 +1,5 @@
+<RCC>
+  <qresource prefix="images">
+    <file alias="test_image.png">images/zc.negatives.exp0.png</file>
+  </qresource>
+</RCC>
