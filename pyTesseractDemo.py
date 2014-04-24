@@ -105,6 +105,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         boxa = self.tesseract.TessBaseAPIGetComponentImages(self.api,
                                             self.comboBoxRIL.currentIndex(),
                                             1, None, None)
+        if not boxa:
+            self.show_msg('No component found. Try to change PSM or RIL.')
+            return
+
         # Get info about number of items on image
         n_items = self.leptonica.boxaGetCount(boxa)
         psm = tess.PSM[self.comboBoxPSM.currentIndex()]
@@ -126,12 +130,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         # Set up result type (BOX structure) for leptonica function boxaGetBox
         self.leptonica.boxaGetBox.restype = lept.BOX_PTR_T
-
         n_boxes = len(self.box_data)
         if n_boxes:
-            print "print:", n_boxes
             for idx in xrange(n_boxes):
-                print "removeItem", idx
                 self.scene.removeItem(self.box_data[idx])
 
         # Display items and print its info
@@ -198,6 +199,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                      self.leptonica.pixGetWidth(self.pix_image))
         self.show_msg("image height: %d" % \
                      self.leptonica.pixGetHeight(self.pix_image))
+        self.box_data = []
 
     def show_msg(self, message):
         """Show message in textBrowser
