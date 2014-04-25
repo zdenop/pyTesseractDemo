@@ -57,14 +57,15 @@ def get_version():
     """ Get tesseract version
     """
     leptonica = get_leptonica()
-    leptonica.TessVersion.restype = ctypes.c_char_p
-    return leptonica.TessVersion()
+    leptonica.getLeptonicaVersion.restype = ctypes.c_char_p
+    leptonica.getLeptonicaVersion.argtypes = []
+    return leptonica.getLeptonicaVersion()
 
 def main():
     """Make a simple test
     """
     leptonica_version = get_version()
-    print "Found leptonica version %s" % leptonica_version
+    print "Found %s" % leptonica_version
 
 if __name__ == '__main__':
     main()

@@ -65,6 +65,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.box_data = []
         self.pix_image = False
         self.image_name = None
+        self.lang = LANG
+
         # Create tesseract api
         self.tesseract = tess.get_tesseract()
         if not self.tesseract:
@@ -77,20 +79,44 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         #  "Fatal error encountered!" == NULL:Error:Assert failed:in file
         #   ../../tesseract-ocr/ccutil/globaloc.cpp, line 75
         locale.setlocale(locale.LC_ALL, 'C')
-        retc = self.tesseract.TessBaseAPIInit3(self.api, tessdata_prefix, LANG)
+        retc = self.tesseract.TessBaseAPIInit3(self.api,
+                                                   tessdata_prefix,
+                                                   self.lang)
         # Restore saved locale
         # locale.setlocale(locale.LC_ALL, current_locale)
-
         if (retc):
             self.tesseract.TessBaseAPIDelete(self.api)
-            self.show_msg('<span style="color:red">Could not initialize' \
+            self.show_msg('<span style="color:red">Could not initialize ' \
                          'tesseract.</span>')
+            return
+        self.show_msg('Tesseract initialized with language \'%s\'.' % \
+                      self.lang)
+
+        # populate language selector
+        available_languages = tess.get_list_of_langs(self.tesseract, self.api)
+        for lang in available_languages:
+            self.comboBoxLang.addItem(lang, lang)
         self.load_image(IMAGE_NAME)
 
     @pyqtSignature('')
     def on_pushButtonShow_pressed(self):
         """Display rectangles
         """
+        tessdata_prefix = tess.get_tessdata_prefix()
+        locale.setlocale(locale.LC_ALL, 'C')
+        retc = 0
+        if self.lang != str(self.comboBoxLang.currentText()):
+            self.lang = str(self.comboBoxLang.currentText())
+            retc = self.tesseract.TessBaseAPIInit3(self.api,
+                                                   tessdata_prefix,
+                                                   self.lang)
+            self.show_msg('Using language \'%s\'.' % self.lang)
+        if (retc):
+            self.tesseract.TessBaseAPIDelete(self.api)
+            self.show_msg('<span style="color:red">Could not re-initialize ' \
+                         'tesseract.</span>')
+            return
+
         # Shut up tesseract - there could be a lot of unwanted messages
         #tesseract.TessBaseAPISetVariable(api, "debug_file", "/dev/null")
 
@@ -130,6 +156,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         # Set up result type (BOX structure) for leptonica function boxaGetBox
         self.leptonica.boxaGetBox.restype = lept.BOX_PTR_T
+        self.leptonica.boxaGetBox.argtypes = []
         n_boxes = len(self.box_data)
         if n_boxes:
             for idx in xrange(n_boxes):
