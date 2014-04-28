@@ -20,16 +20,13 @@ import locale
 from PyQt4.QtGui import (QApplication, QMainWindow, QStyleFactory, QFileDialog,
                          QGraphicsScene,
                          QPixmap, QColor, QPen, QBrush, QTextCursor, QStyle)
-from PyQt4.QtCore import (Qt, QCoreApplication, pyqtSignature)
+from PyQt4.QtCore import (Qt, QCoreApplication, pyqtSignature, QVariant)
 
 from ui.ui_mainwindow import Ui_MainWindow
 
 import libs.tesstool as tess
 import libs.lepttool as lept
-
-# Demo variables
-IMAGE_NAME =  r'images/phototest.tif'
-LANG = 'eng'
+import libs.settings as sett
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -48,29 +45,65 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                         QStyle.SP_DialogCloseButton)
         self.pushButtonQuit.setIcon(quit_icon)
         self.setWindowTitle('Analyze & ORC image with tesseract and leptonica')
-        self.resize(1150, 950)
 
+        # Initialize variables and pointers
+        self.box_data = []
+        self.pix_image = False
+        self.tesseract = None
+        self.api = None
+        self.lang = 'eng'
+
+        self.initialize_tesseract()
+        if self.tesseract:
+            available_languages = tess.get_list_of_langs(self.tesseract,
+                                                         self.api)
+            for lang in available_languages:
+                self.comboBoxLang.addItem(lang, lang)
         for idx, psm in enumerate(tess.PSM):
             self.comboBoxPSM.addItem(psm, idx)
         for idx, ril in enumerate(tess.RIL):
             self.comboBoxRIL.addItem(ril, idx)
-        # Default values
-        self.comboBoxPSM.setCurrentIndex(1)
-        self.comboBoxRIL.setCurrentIndex(2)
 
         self.leptonica = lept.get_leptonica()
         if not self.leptonica:
             self.show_msg('Leptonica initialization failed...')
 
-        self.box_data = []
-        self.pix_image = False
-        self.image_name = None
-        self.lang = LANG
+        # Read settings and set default values
+        geometry = sett.readSetting('settings_geometry')
+        if geometry is not None:
+            self.restoreGeometry(QVariant(geometry).toByteArray())
+        else:
+            self.resize(1150, 950)
+        state = sett.readSetting('state')
+        if state is not None:
+            self.restoreState(QVariant(state).toByteArray())
+        lang = sett.readSetting('language')
+        if lang:
+            self.lang = lang
+            current_index = self.comboBoxLang.findData(lang)
+            self.comboBoxLang.setCurrentIndex(current_index)
+        psm = sett.readSetting('PSM')
+        if psm:
+            current_index = self.comboBoxPSM.findData(psm)
+            self.comboBoxPSM.setCurrentIndex(current_index)
+        ril = sett.readSetting('RIL')
+        if ril:
+            current_index = self.comboBoxRIL.findData(ril)
+            self.comboBoxRIL.setCurrentIndex(current_index)
 
-        # Create tesseract api
+        image_name = sett.readSetting('images/last_filename')
+        if image_name:
+            self.image_name = image_name
+        self.load_image(image_name)
+
+
+    def initialize_tesseract(self):
+        """Create tesseract api
+        """
         self.tesseract = tess.get_tesseract()
         if not self.tesseract:
             self.show_msg('Tesseract initialization failed...')
+            return
         self.api = self.tesseract.TessBaseAPICreate()
         tessdata_prefix = tess.get_tessdata_prefix()
         #current_locale = locale.getlocale()  # Save current locale
@@ -92,11 +125,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.show_msg('Tesseract initialized with language \'%s\'.' % \
                       self.lang)
 
-        # populate language selector
-        available_languages = tess.get_list_of_langs(self.tesseract, self.api)
-        for lang in available_languages:
-            self.comboBoxLang.addItem(lang, lang)
-        self.load_image(IMAGE_NAME)
 
     @pyqtSignature('')
     def on_pushButtonShow_pressed(self):
@@ -237,6 +265,24 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         cursor.movePosition(QTextCursor.End)
         self.textEdit.setTextCursor(cursor)
         QApplication.processEvents()
+
+    def closeEvent(self, event):
+        """Store setting on exit
+        """
+        sett.storeSetting('geometry', self.saveGeometry())
+        sett.storeSetting('state', self.saveGeometry())
+        sett.storeSetting('images/last_filename', self.image_name)
+        row_l = self.comboBoxLang.currentIndex()
+        sett.storeSetting('language',
+                          self.comboBoxLang.itemData(row_l).toString())
+        row_p = self.comboBoxPSM.currentIndex()
+        sett.storeSetting('PSM',
+                          self.comboBoxPSM.itemData(row_p).toString())
+        row_r = self.comboBoxRIL.currentIndex()
+        sett.storeSetting('RIL',
+                          self.comboBoxRIL.itemData(row_r).toString())
+        QMainWindow.closeEvent(self, event)
+
 
 def main():
     """Start GUI
