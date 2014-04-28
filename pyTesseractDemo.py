@@ -53,12 +53,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.api = None
         self.lang = 'eng'
 
+        lang = sett.readSetting('language')
+        if lang:
+            self.lang = lang
+
         self.initialize_tesseract()
         if self.tesseract:
             available_languages = tess.get_list_of_langs(self.tesseract,
                                                          self.api)
             for lang in available_languages:
                 self.comboBoxLang.addItem(lang, lang)
+            current_index = self.comboBoxLang.findData(self.lang)
+            if current_index:
+                self.comboBoxLang.setCurrentIndex(current_index)
+
         for idx, psm in enumerate(tess.PSM):
             self.comboBoxPSM.addItem(psm, idx)
         for idx, ril in enumerate(tess.RIL):
@@ -77,11 +85,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         state = sett.readSetting('state')
         if state is not None:
             self.restoreState(QVariant(state).toByteArray())
-        lang = sett.readSetting('language')
-        if lang:
-            self.lang = lang
-            current_index = self.comboBoxLang.findData(lang)
-            self.comboBoxLang.setCurrentIndex(current_index)
         psm = sett.readSetting('PSM')
         if psm:
             current_index = self.comboBoxPSM.findData(psm)
@@ -100,7 +103,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def initialize_tesseract(self):
         """Create tesseract api
         """
-        self.tesseract = tess.get_tesseract()
+        self.tesseract = tess.get_tesseract(os.path.dirname(__file__))
         if not self.tesseract:
             self.show_msg('Tesseract initialization failed...')
             return
@@ -122,8 +125,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.show_msg('<span style="color:red">Could not initialize ' \
                          'tesseract.</span>')
             return
-        self.show_msg('Tesseract initialized with language \'%s\'.' % \
-                      self.lang)
+        self.show_msg('Tesseract %s initialized with language \'%s\'.' % \
+                      (tess.VERSION, self.lang))
 
 
     @pyqtSignature('')
@@ -198,14 +201,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.tesseract.TessBaseAPISetRectangle(self.api,
                                               box.x, box.y, box.w, box.h)
             ocr_result = self.tesseract.TessBaseAPIGetUTF8Text(self.api)
-            result_text = ctypes.string_at(ocr_result)
+            result_text = ctypes.string_at(ocr_result).decode('utf-8').strip()
             conf = self.tesseract.TessBaseAPIMeanTextConf(self.api)
             self.show_msg('Box[%d]: x=%d, y=%d, w=%d, h=%d, ' \
-                         'confidence: %d, ' \
-                         'text: <span style="color:blue">%s</span>' % \
-                         (item, box.x, box.y, box.w, box.h,
-                          conf,
-                          result_text.strip()))
+                          'confidence: %d, ' \
+                          'text: <span style="color:blue">%s</span>' % \
+                          (item, box.x, box.y, box.w, box.h,
+                           conf, result_text
+                          ))
             box_items.append(self.scene.addRect(box.x, box.y, box.w, box.h,
                                QPen(QColor(255, 0, 0, 255)),
                                QBrush(QColor(255, 0, 0, 100))))
@@ -250,10 +253,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # size info
         # filename must be c-string
         self.pix_image = self.leptonica.pixRead(str(filename))
-        self.show_msg("image width: %d" % \
-                     self.leptonica.pixGetWidth(self.pix_image))
-        self.show_msg("image height: %d" % \
-                     self.leptonica.pixGetHeight(self.pix_image))
+        self.show_msg("image size: %dx%d, resolution %dx%d" % \
+                     (self.leptonica.pixGetWidth(self.pix_image),
+                      self.leptonica.pixGetHeight(self.pix_image),
+                      self.leptonica.pixGetXRes(self.pix_image),
+                      self.leptonica.pixGetYRes(self.pix_image)
+                     ))
         self.box_data = []
 
     def show_msg(self, message):
@@ -273,8 +278,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         sett.storeSetting('state', self.saveGeometry())
         sett.storeSetting('images/last_filename', self.image_name)
         row_l = self.comboBoxLang.currentIndex()
-        sett.storeSetting('language',
-                          self.comboBoxLang.itemData(row_l).toString())
+        lang = self.comboBoxLang.itemData(row_l).toString()
+        if lang:
+            sett.storeSetting('language', lang)
         row_p = self.comboBoxPSM.currentIndex()
         sett.storeSetting('PSM',
                           self.comboBoxPSM.itemData(row_p).toString())

@@ -11,10 +11,11 @@ __date__ = '22.04.2014'
 import os
 import sys
 import ctypes
+from ctypes.util import find_library
 from itertools import count
 
 LIBPATH = '/usr/local/lib64/'
-LIBPATH_W = r'..\win32'
+VERSION = ''
 
 # Define Page Iterator Levels
 RIL = ['RIL_BLOCK', 'RIL_PARA', 'RIL_TEXTLINE', 'RIL_WORD', 'RIL_SYMBOL']
@@ -47,27 +48,39 @@ def get_tessdata_prefix():
         tessdata_prefix = '../'
     return tessdata_prefix
 
-def get_tesseract():
+def get_tesseract(search_path='.'):
     """ Get tesseract handle
     """
     if sys.platform == 'win32':
-        libname = os.path.join(LIBPATH_W, 'libtesseract303.dll')
-        libname_alt = 'libtesseract303.dll'
-        os.environ['PATH'] += os.pathsep + LIBPATH_W
+        lib_name = 'libtesseract303'
+        _path = os.environ['PATH']
+        for _dir in ['', 'win32', '..' , '..\win32']:
+            temp_path = os.path.join(search_path, _dir)
+            os.environ['PATH'] = _path + os.pathsep + temp_path
+            lib_path = find_library(lib_name)
+            if not lib_path is None:
+                lib_path = os.path.realpath(lib_path)
+                print "found", lib_path
+                break
     else:
-        libname = LIBPATH + 'libtesseract.so.3.0.3'
-        libname_alt = 'libtesseract.so.3'
+        lib_name = 'libtesseract.so.3'
+        lib_path = LIBPATH + 'libtesseract.so.3.0.3'
 
     try:
-        tesseract = ctypes.cdll.LoadLibrary(libname)
+        tesseract = ctypes.cdll.LoadLibrary(lib_name)
     except OSError:
         try:
-            tesseract = ctypes.cdll.LoadLibrary(libname_alt)
+            tesseract = ctypes.cdll.LoadLibrary(lib_path)
         except OSError, err:
-            print('Loading of %s failed...' % libname)
-            print('Loading of %s failed...' % libname_alt)
+            print('Loading of %s failed...' % lib_name)
+            print('Loading of %s failed...' % lib_path)
             print(err)
             return
+
+    global VERSION
+    tesseract.TessVersion.restype = ctypes.c_char_p
+    tesseract.TessVersion.argtypes = []
+    VERSION = tesseract.TessVersion()
     return tesseract
 
 def get_version():
