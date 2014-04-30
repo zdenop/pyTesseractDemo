@@ -52,6 +52,8 @@ def readSetting(name):
                               QDesktopServices.DesktopLocation)).toString())
     elif name == 'images/last_filename':
         return str(settings.value(name, r'images/phototest.tif').toString())
+    elif name == 'images/zoom_factor':
+        return settings.value(name, QVariant(1.0)).toReal()[0]
     elif name == 'language':
         # default value 'eng'
         return str(settings.value(name, 'eng').toString())

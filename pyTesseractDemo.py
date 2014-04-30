@@ -19,9 +19,9 @@ import locale
 
 from PyQt4.QtGui import (QApplication, QMainWindow, QStyleFactory, QFileDialog,
                          QPixmap, QColor, QPen, QBrush, QTextCursor, QStyle,
-                         QGraphicsScene)
+                         QGraphicsScene, QTransform)
 from PyQt4.QtCore import (Qt, QCoreApplication, pyqtSignature, SIGNAL, QObject,
-                          QVariant)
+                          QVariant, QEvent)
 
 from ui.ui_mainwindow import Ui_MainWindow
 
@@ -42,15 +42,22 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         self.scene = QGraphicsScene()
         self.graphicsView.setScene(self.scene)
+        self.scene.installEventFilter(self)
         self.graphicsView.setBackgroundBrush(QBrush(Qt.gray, Qt.BDiagPattern))
         quit_icon = QApplication.style().standardIcon(
                         QStyle.SP_DialogCloseButton)
         self.pushButtonQuit.setIcon(quit_icon)
         self.setWindowTitle('Analyze & ORC image with tesseract and leptonica')
+        self.actionZoomOut.triggered.connect(self.zoomOut)
+        self.actionZoomIn.triggered.connect(self.zoomIn)
+        self.actionZoomTo1.triggered.connect(self.zoomTo1)
+        self.connect(self.actionZoomFit, SIGNAL('triggered()'), self.zoomFit)
 
         # Initialize variables and pointers
         self.box_data = []
         self.pix_image = False
+        self.image_width = 0
+        self.image_height = 0
         self.tesseract = None
         self.api = None
         self.lang = 'eng'
@@ -106,6 +113,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if image_name:
             self.image_name = image_name
         self.load_image(image_name)
+        zoom_factor = sett.readSetting('images/zoom_factor')
+        self.setZoom(zoom_factor)
 
 
     def initialize_tesseract(self):
@@ -252,6 +261,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         """Load image to scene and create PIX
         """
         self.scene.clear()
+        self.zoomTo1()
         self.image_name = str(filename)  # filename must be c-string
         self.scene.addPixmap(QPixmap(filename))
 
@@ -260,9 +270,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # Read image with leptonica => create PIX structure and report image
         # size info
         self.pix_image = self.leptonica.pixRead(self.image_name)
+        self.image_width = self.leptonica.pixGetWidth(self.pix_image)
+        self.image_height = self.leptonica.pixGetHeight(self.pix_image)
         self.show_msg("image size: %dx%d, resolution %dx%d" % \
-                     (self.leptonica.pixGetWidth(self.pix_image),
-                      self.leptonica.pixGetHeight(self.pix_image),
+                     (self.image_width,
+                      self.image_height,
                       self.leptonica.pixGetXRes(self.pix_image),
                       self.leptonica.pixGetYRes(self.pix_image)
                      ))
@@ -287,6 +299,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         sett.storeSetting("splitter_1Geo", self.splitter_1.saveGeometry());
         sett.storeSetting("splitter_2Sizes", self.splitter_2.saveState());
         sett.storeSetting('images/last_filename', self.image_name)
+        sett.storeSetting('images/zoom_factor', self.getZoomFactor())
         row_l = self.comboBoxLang.currentIndex()
         lang = self.comboBoxLang.itemData(row_l).toString()
         if lang:
@@ -298,6 +311,73 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         sett.storeSetting('RIL',
                           self.comboBoxRIL.itemData(row_r).toString())
         QMainWindow.closeEvent(self, event)
+
+    def setZoom(self, scale):
+        """Scale to selected factor
+        """
+        transform = QTransform()
+        transform.scale(scale, scale)
+        self.graphicsView.setTransform(transform)
+
+    def zoomFit(self):
+        """Zoom image to fit in graphicsView window
+        """
+        # TODO: put border to preferencies
+        border = 0.95
+        if (not self.image_height) or (not self.image_width):
+            return
+        viewWidth = self.graphicsView.viewport().width() * border
+        viewHeight = self.graphicsView.viewport().height() * border
+
+        ratio = float(viewWidth / viewHeight)
+        aspectRatio = float(self.image_width / self.image_height)
+
+        if ratio > aspectRatio:
+            zoomFactor = float(viewHeight / self.image_height)
+        else:
+            zoomFactor = float(viewWidth / self.image_width)
+        self.setZoom(zoomFactor)
+
+    def zoomTo1(self):
+        """Zoom to 1:1
+        """
+        self.setZoom(1)
+
+    def zoomIn(self):
+        """Zoom In
+        """
+        factor = 1.25
+        self.graphicsView.scale(factor, factor)
+
+    def zoomOut(self):
+        """Zoom Out
+        """
+        factor = .8
+        self.graphicsView.scale(factor, factor)
+        self.getZoomFactor()
+
+    def getZoomFactor(self):
+        """Get current zoom factor
+        """
+        return self.graphicsView.transform().m11()
+
+    def eventFilter(self, obj, event):
+        """Zoom In/Out with CTRL + mouse wheel
+        """
+        if event.type() == QEvent.GraphicsSceneWheel:
+            assert isinstance(obj, QGraphicsScene)
+            delta = event.delta()
+            if (event.modifiers() == Qt.ControlModifier and delta > 0):
+                factor = 1.41 ** (event.delta() / 240.0)
+                self.graphicsView.scale(factor, factor)
+                event.accept()
+                return True
+            elif (event.modifiers() == Qt.ControlModifier and delta < 0):
+                factor = 1.41 ** (event.delta() / 240.0)
+                self.graphicsView.scale(factor, factor)
+                event.accept()
+                return True
+        return obj.eventFilter(obj, event)
 
 
 def main():
