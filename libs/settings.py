@@ -44,7 +44,7 @@ def readSetting(name):
     """
     settings = QSettings(configFile(), QSettings.IniFormat)
     # ByteArray
-    if name in ('geometry', 'state'):
+    if name in ('geometry', 'state', 'splitter_1Sizes', 'splitter_2Sizes'):
         return settings.value(name)
     elif name == 'images/input_dir':
         return str(settings.value(name,\

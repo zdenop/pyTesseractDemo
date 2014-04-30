@@ -20,12 +20,12 @@
       <property name="orientation">
        <enum>Qt::Vertical</enum>
       </property>
-      <widget class="QSplitter" name="splitter">
+      <widget class="QSplitter" name="splitter_1">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
        <widget class="QGraphicsView" name="graphicsView"/>
-       <widget class="QWidget" name="">
+       <widget class="QWidget" name="layoutWidget">
         <layout class="QVBoxLayout" name="verticalLayout">
          <item>
           <widget class="QPushButton" name="pushButtonLoad">

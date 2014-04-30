@@ -18,9 +18,10 @@ import ctypes
 import locale
 
 from PyQt4.QtGui import (QApplication, QMainWindow, QStyleFactory, QFileDialog,
-                         QGraphicsScene,
-                         QPixmap, QColor, QPen, QBrush, QTextCursor, QStyle)
-from PyQt4.QtCore import (Qt, QCoreApplication, pyqtSignature, QVariant)
+                         QPixmap, QColor, QPen, QBrush, QTextCursor, QStyle,
+                         QGraphicsScene)
+from PyQt4.QtCore import (Qt, QCoreApplication, pyqtSignature, SIGNAL, QObject,
+                          QVariant)
 
 from ui.ui_mainwindow import Ui_MainWindow
 
@@ -41,6 +42,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         self.scene = QGraphicsScene()
         self.graphicsView.setScene(self.scene)
+        self.graphicsView.setBackgroundBrush(QBrush(Qt.gray, Qt.BDiagPattern))
         quit_icon = QApplication.style().standardIcon(
                         QStyle.SP_DialogCloseButton)
         self.pushButtonQuit.setIcon(quit_icon)
@@ -85,6 +87,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         state = sett.readSetting('state')
         if state is not None:
             self.restoreState(QVariant(state).toByteArray())
+        sp_1_state = sett.readSetting('splitter_1Sizes')
+        if sp_1_state is not None:
+            self.splitter_1.restoreState(QVariant(sp_1_state).toByteArray())
+        sp_2_state = sett.readSetting('splitter_2Sizes')
+        if sp_2_state is not None:
+            self.splitter_2.restoreState(QVariant(sp_2_state).toByteArray())
         psm = sett.readSetting('PSM')
         if psm:
             current_index = self.comboBoxPSM.findData(psm)
@@ -244,15 +252,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         """Load image to scene and create PIX
         """
         self.scene.clear()
-        self.image_name = filename
+        self.image_name = str(filename)  # filename must be c-string
         self.scene.addPixmap(QPixmap(filename))
-        self.setWindowTitle('Analyze & ORC image with tesseract and ' \
-                            'leptonica :: %s' % filename)
 
+        self.setWindowTitle('Analyze & ORC image with tesseract and ' \
+                            'leptonica :: %s' % os.path.basename(self.image_name))
         # Read image with leptonica => create PIX structure and report image
         # size info
-        # filename must be c-string
-        self.pix_image = self.leptonica.pixRead(str(filename))
+        self.pix_image = self.leptonica.pixRead(self.image_name)
         self.show_msg("image size: %dx%d, resolution %dx%d" % \
                      (self.leptonica.pixGetWidth(self.pix_image),
                       self.leptonica.pixGetHeight(self.pix_image),
@@ -275,7 +282,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         """Store setting on exit
         """
         sett.storeSetting('geometry', self.saveGeometry())
-        sett.storeSetting('state', self.saveGeometry())
+        sett.storeSetting('state', self.saveState())
+        sett.storeSetting("splitter_1Sizes", self.splitter_1.saveState());
+        sett.storeSetting("splitter_1Geo", self.splitter_1.saveGeometry());
+        sett.storeSetting("splitter_2Sizes", self.splitter_2.saveState());
         sett.storeSetting('images/last_filename', self.image_name)
         row_l = self.comboBoxLang.currentIndex()
         lang = self.comboBoxLang.itemData(row_l).toString()

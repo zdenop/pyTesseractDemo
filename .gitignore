@@ -55,3 +55,4 @@ docs/_build/
 # ui
 ui/ui_*.py
 *_rc.py
+test/*
