@@ -68,14 +68,12 @@ def get_leptonica():
 def pix_to_qimage(leptonica, pix_image):
     """ Convert leptonica PIX to QT QImage
     """
+    # TODO(zdenop): 8509_001.4B.tif crash this -> implement PIX structure
     if not leptonica:
         return None
     width = leptonica.pixGetWidth(pix_image)
     height = leptonica.pixGetHeight(pix_image)
     depth = leptonica.pixGetDepth(pix_image)
-    bytes_per_line = leptonica.pixGetWpl(pix_image) * 4
-    image_datas = leptonica.pixEndianByteSwapNew(pix_image)
-    datas = leptonica.pixGetData(image_datas)
 
     if depth == 1:
         image_format = QImage.Format_Mono
@@ -83,6 +81,14 @@ def pix_to_qimage(leptonica, pix_image):
         image_format = QImage.Format_Indexed8
     elif depth == 32:
         image_format = QImage.Format_RGB32
+    else:
+        #  Convert other depths to 32
+        pix_image = leptonica.pixConvertTo32(pix_image)
+        image_format = QImage.Format_RGB32
+
+    bytes_per_line = leptonica.pixGetWpl(pix_image) * 4
+    image_datas = leptonica.pixEndianByteSwapNew(pix_image)
+    datas = leptonica.pixGetData(image_datas)
 
     result = QImage(datas, width, height, bytes_per_line, image_format)
 
@@ -94,7 +100,6 @@ def pix_to_qimage(leptonica, pix_image):
         none = QImage(0, 0, QImage.Format_Invalid)
         print 'Invalid format!!!'
         return none
-
     return result.rgbSwapped()
 
 def get_version():
