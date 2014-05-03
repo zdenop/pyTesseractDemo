@@ -9,8 +9,8 @@
 # http://pastebin.com/DhPUgrAj
 
 __author__ = u'Zdenko Podobný <zdenop@gmail.com>'
-__version__ = '0.1'
-__date__ = '22.04.2014'
+__version__ = '0.2'
+__date__ = '01.05.2014'
 
 import os
 import sys
@@ -263,10 +263,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.scene.clear()
         self.zoomTo1()
         self.image_name = str(filename)  # filename must be c-string
-        self.scene.addPixmap(QPixmap(filename))
-
-        self.setWindowTitle('Analyze & ORC image with tesseract and ' \
-                            'leptonica :: %s' % os.path.basename(self.image_name))
         # Read image with leptonica => create PIX structure and report image
         # size info
         self.pix_image = self.leptonica.pixRead(self.image_name)
@@ -279,6 +275,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                       self.leptonica.pixGetYRes(self.pix_image)
                      ))
         self.box_data = []
+        qimage = lept.pix_to_qimage(self.leptonica, self.pix_image)
+        if not qimage:  # fallback solution
+            self.scene.addPixmap(QPixmap(filename))
+        else:
+            self.scene.addPixmap(QPixmap(qimage))
+        self.setWindowTitle('Analyze & ORC image with tesseract and ' \
+                            'leptonica :: %s' % os.path.basename(self.image_name))
 
     def show_msg(self, message):
         """Show message in textBrowser
