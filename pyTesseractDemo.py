@@ -19,8 +19,8 @@ import locale
 
 from PyQt4.QtGui import (QApplication, QMainWindow, QStyleFactory, QFileDialog,
                          QPixmap, QColor, QPen, QBrush, QTextCursor, QStyle,
-                         QGraphicsScene, QTransform)
-from PyQt4.QtCore import (Qt, QCoreApplication, pyqtSignature, SIGNAL, QObject,
+                         QTransform)
+from PyQt4.QtCore import (Qt, QCoreApplication, pyqtSignature, SIGNAL,
                           QVariant, QEvent)
 
 from ui.ui_mainwindow import Ui_MainWindow
@@ -28,6 +28,7 @@ from ui.ui_mainwindow import Ui_MainWindow
 import libs.tesstool as tess
 import libs.lepttool as lept
 import libs.settings as sett
+from libs.scene import CustomGraphicsScene
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -40,7 +41,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.setAttribute(Qt.WA_DeleteOnClose)
         QApplication.setStyle(QStyleFactory.create('cleanlooks'))
         self.setupUi(self)
-        self.scene = QGraphicsScene()
+        self.scene = CustomGraphicsScene()
+        self.connect(self.scene, SIGNAL("dropped_to_scene(QString)"),
+                     self.load_image)
         self.graphicsView.setScene(self.scene)
         self.scene.installEventFilter(self)
         self.graphicsView.setBackgroundBrush(QBrush(Qt.gray, Qt.BDiagPattern))

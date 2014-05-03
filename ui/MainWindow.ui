@@ -87,6 +87,9 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="textInteractionFlags">
+        <set>Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
+       </property>
       </widget>
      </widget>
     </item>
