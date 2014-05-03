@@ -242,16 +242,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def on_pushButtonLoad_pressed(self):
         """Load Image
         """
+        input_dir = sett.readSetting('images/input_dir')
         image = QFileDialog.getOpenFileName(self,
                     'Open Image file',
-                    './',
+                    input_dir,
                     'Images (*.jpg *.jpeg *.bmp *.png *.tiff *.tif *.gif);;' \
                     'All files (*.*)')
 
         if not image:
-            self.show_msg(u"File was not selected…")
+            self.show_msg(u'File was not selected…')
             return
         self.load_image(image)
+        sett.storeSetting('images/input_dir', os.path.dirname(str(image)));
 
     @pyqtSignature('')
     def on_pushButtonRestart_pressed(self):
