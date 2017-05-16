@@ -48,7 +48,7 @@ def iter_ptr_list(plist):
     """
     for i in count(0):
         if not plist[i]:
-            raise StopIteration
+            return
         yield plist[i]
 
 
