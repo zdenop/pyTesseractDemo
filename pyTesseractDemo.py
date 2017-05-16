@@ -155,8 +155,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.show_msg('<span style="color:red">Could not initialize ' \
                          'tesseract.</span>')
             return
-        self.show_msg('Tesseract %s initialized with language \'%s\'.' % \
-                      (tess.VERSION, self.lang))
+        self.show_msg('Tesseract {0} initialized with language \'{1}\'.\n'
+                      '{2} is used with image support for {3}'
+                      .format(tess.VERSION, self.lang,
+                              lept.get_version(), lept.get_image_support()))
 
 
     @pyqtSlot()

@@ -107,14 +107,26 @@ def pix_to_qimage(leptonica, pix_image):
         return none
     return result.rgbSwapped()
 
-def get_version():
+def get_version(leptonica=None):
     """ Get tesseract version
     """
-    leptonica = get_leptonica()
+    if not leptonica:
+        leptonica = get_leptonica()
     if leptonica:
         leptonica.getLeptonicaVersion.restype = ctypes.c_char_p
         leptonica.getLeptonicaVersion.argtypes = []
         return leptonica.getLeptonicaVersion().decode('utf-8')
+    return None
+
+def get_image_support(leptonica=None):
+    """ Get tesseract version
+    """
+    if not leptonica:
+        leptonica = get_leptonica()
+    if leptonica:
+        leptonica.getImagelibVersions.restype = ctypes.c_char_p
+        leptonica.getImagelibVersions.argtypes = []
+        return leptonica.getImagelibVersions().decode('utf-8')
     return None
 
 
@@ -123,19 +135,28 @@ def main():
     """
     global LIBPATH_W
     LIBPATH_W = r'..\win32'
-    leptonica_version = get_version()
-    print('Found %s' % leptonica_version)
+    file_name = r'..\images\eurotext.tif'
+
     leptonica = get_leptonica()
     if not leptonica:
         print("Leptonica was not initialized! Quiting...")
         sys.exit(-1)
-    pix_image = leptonica.pixRead(r'..\images\eurotext.tif')
+    leptonica_version = get_version(leptonica)
+    print('Found %s' % leptonica_version)
+    print(get_image_support(leptonica))
+
+    if  os.path.exists(file_name) == False:
+        print("File {} does not exists. There is nothing to check."
+              .format(file_name))
+    pix_image = leptonica.pixRead(file_name.encode())
     if pix_image:
         print('w', leptonica.pixGetWidth(pix_image))
         print('h', leptonica.pixGetHeight(pix_image))
         print('d', leptonica.pixGetDepth(pix_image))
     else:
         print('Image can not be openned')
+        sys.exit()
+
     qimage = QImage()
     qimage = pix_to_qimage(leptonica, pix_image)
     if qimage:
