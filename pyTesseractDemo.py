@@ -48,7 +48,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.scene.installEventFilter(self)
         self.graphicsView.setBackgroundBrush(QBrush(Qt.gray, Qt.BDiagPattern))
         quit_icon = QApplication.style().standardIcon(
-                        QStyle.SP_DialogCloseButton)
+            QStyle.SP_DialogCloseButton)
         self.pushButtonQuit.setIcon(quit_icon)
         self.setWindowTitle('Analyze & ORC image with tesseract and leptonica')
         self.actionZoomOut.triggered.connect(self.zoomOut)
@@ -129,7 +129,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         zoom_factor = sett.readSetting('images/zoom_factor')
         self.setZoom(zoom_factor)
 
-
     def initialize_tesseract(self):
         """Create tesseract api
         """
@@ -139,27 +138,26 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             return
         self.api = self.tesseract.TessBaseAPICreate()
         tessdata_prefix = tess.get_tessdata_prefix()
-        #current_locale = locale.getlocale()  # Save current locale
+        # current_locale = locale.getlocale()  # Save current locale
         # Switch to C locale to handle
         #  Error: Illegal min or max specification!
         #  "Fatal error encountered!" == NULL:Error:Assert failed:in file
         #   ../../tesseract-ocr/ccutil/globaloc.cpp, line 75
         locale.setlocale(locale.LC_ALL, 'C')
         retc = self.tesseract.TessBaseAPIInit3(self.api,
-                                                   tessdata_prefix.encode(),
-                                                   self.lang.encode())
+                                               tessdata_prefix.encode(),
+                                               self.lang.encode())
         # Restore saved locale
         # locale.setlocale(locale.LC_ALL, current_locale)
         if (retc):
             self.tesseract.TessBaseAPIDelete(self.api)
-            self.show_msg('<span style="color:red">Could not initialize ' \
-                         'tesseract.</span>')
+            self.show_msg('<span style="color:red">Could not initialize '
+                          'tesseract.</span>')
             return
         self.show_msg('Tesseract {0} initialized with language \'{1}\'.\n'
                       '{2} is used with image support for {3}'
                       .format(tess.VERSION, self.lang,
                               lept.get_version(), lept.get_image_support()))
-
 
     @pyqtSlot()
     def on_pushButtonShow_pressed(self):
@@ -176,8 +174,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.show_msg('Using language \'%s\'.' % self.lang)
         if (retc):
             self.tesseract.TessBaseAPIDelete(self.api)
-            self.show_msg('<span style="color:red">Could not re-initialize ' \
-                         'tesseract.</span>')
+            self.show_msg('<span style="color:red">Could not re-initialize '
+                          'tesseract.</span>')
             return
 
         # Shut up tesseract - there could be a lot of unwanted messages
@@ -187,13 +185,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # Set PIX structure to tesseract api
         self.tesseract.TessBaseAPISetImage2(self.api, self.pix_image)
 
-        self.tesseract.TessBaseAPISetPageSegMode(self.api,
-                                            self.comboBoxPSM.currentIndex())
+        self.tesseract.TessBaseAPISetPageSegMode(
+            self.api, self.comboBoxPSM.currentIndex())
 
         # Get info(BOXA structure) about lines(RIL_TEXTLINE) from image in api
-        boxa = self.tesseract.TessBaseAPIGetComponentImages(self.api,
-                                            self.comboBoxRIL.currentIndex(),
-                                            1, None, None)
+        boxa = self.tesseract.TessBaseAPIGetComponentImages(
+            self.api, self.comboBoxRIL.currentIndex(), 1, None, None)
         if not boxa:
             self.show_msg('No component found. Try to change PSM or RIL.')
             return
@@ -202,9 +199,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         n_items = self.leptonica.boxaGetCount(boxa)
         psm = tess.PSM[self.comboBoxPSM.currentIndex()]
         ril = tess.RIL[self.comboBoxRIL.currentIndex()]
-        self.show_msg('<span style="color:green">' \
-                     'Found %d image components with %s and %s.</span>' % \
-                     (n_items, psm, ril))
+        self.show_msg('<span style="color:green">'
+                      'Found %d image components with %s and %s.</span>' %
+                      (n_items, psm, ril))
 
         ocr_psm = tess.PSM_SINGLE_BLOCK
         if ril == 'RIL_PARA':
@@ -231,22 +228,26 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             lept_box = self.leptonica.boxaGetBox(boxa, item, lept.L_CLONE)
             box = lept_box.contents
             self.tesseract.TessBaseAPISetRectangle(self.api,
-                                              box.x, box.y, box.w, box.h)
+                                                   box.x, box.y, box.w, box.h)
             ocr_result = self.tesseract.TessBaseAPIGetUTF8Text(self.api)
             result_text = ctypes.string_at(ocr_result).decode('utf-8').strip()
             conf = self.tesseract.TessBaseAPIMeanTextConf(self.api)
-            self.show_msg('Box[%d]: x=%d, y=%d, w=%d, h=%d, ' \
-                          'confidence: %d, ' \
-                          'text: <span style="color:blue">%s</span>' % \
+            self.show_msg('Box[%d]: x=%d, y=%d, w=%d, h=%d, '
+                          'confidence: %d, '
+                          'text: <span style="color:blue">%s</span>' %
                           (item, box.x, box.y, box.w, box.h,
                            conf, result_text
-                          ))
-            box_items.append(self.scene.addRect(box.x, box.y, box.w, box.h,
-                               QPen(QColor(255, 0, 0, 255)),
-                               QBrush(QColor(255, 0, 0, 100))))
+                           ))
+            box_items.append(
+                self.scene.addRect(
+                    box.x, box.y, box.w, box.h, QPen(
+                        QColor(
+                            255, 0, 0, 255)), QBrush(
+                        QColor(
+                            255, 0, 0, 100))))
             box_items[item].setAcceptHoverEvents(True)
-            box_items[item].setToolTip("Box[%d]: confidence:%s, text:%s" % \
-                                      (item, conf, result_text))
+            box_items[item].setToolTip("Box[%d]: confidence:%s, text:%s" %
+                                       (item, conf, result_text))
         QCoreApplication.processEvents()
         self.box_data = box_items
 
@@ -255,11 +256,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         """Load Image
         """
         input_dir = sett.readSetting('images/input_dir')
-        image = QFileDialog.getOpenFileName(self,
-                    'Open Image file',
-                    input_dir,
-                    'Images (*.jpg *.jpeg *.bmp *.png *.tiff *.tif *.gif);;' \
-                    'All files (*.*)')
+        image = QFileDialog.getOpenFileName(
+            self,
+            'Open Image file',
+            input_dir,
+            'Images (*.jpg *.jpeg *.bmp *.png *.tiff *.tif *.gif);;'
+            'All files (*.*)')
 
         if not image:
             self.show_msg('File was not selected…')
@@ -269,7 +271,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         else:
             filename = image
         self.load_image(filename)
-        sett.storeSetting('images/input_dir', os.path.dirname(filename));
+        sett.storeSetting('images/input_dir', os.path.dirname(filename))
 
     @pyqtSlot()
     def on_pushButtonRestart_pressed(self):
@@ -290,20 +292,23 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.pix_image = self.leptonica.pixRead(self.image_name.encode())
         self.image_width = self.leptonica.pixGetWidth(self.pix_image)
         self.image_height = self.leptonica.pixGetHeight(self.pix_image)
-        self.show_msg("image size: %dx%d, resolution %dx%d" % \
-                     (self.image_width,
-                      self.image_height,
-                      self.leptonica.pixGetXRes(self.pix_image),
-                      self.leptonica.pixGetYRes(self.pix_image)
-                     ))
+        self.show_msg("image size: %dx%d, resolution %dx%d" %
+                      (self.image_width,
+                       self.image_height,
+                       self.leptonica.pixGetXRes(self.pix_image),
+                       self.leptonica.pixGetYRes(self.pix_image)
+                       ))
         self.box_data = []
         qimage = lept.pix_to_qimage(self.leptonica, self.pix_image)
         if not qimage:  # fallback solution
             self.scene.addPixmap(QPixmap(filename))
         else:
             self.scene.addPixmap(QPixmap(qimage))
-        self.setWindowTitle('Analyze & ORC image with tesseract and ' \
-                            'leptonica :: %s' % os.path.basename(self.image_name))
+        self.setWindowTitle(
+            'Analyze & ORC image with tesseract and '
+            'leptonica :: %s' %
+            os.path.basename(
+                self.image_name))
 
     def show_msg(self, message):
         """Show message in textBrowser
@@ -320,9 +325,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         """
         sett.storeSetting('geometry', self.saveGeometry())
         sett.storeSetting('state', self.saveState())
-        sett.storeSetting("splitter_1Sizes", self.splitter_1.saveState());
-        sett.storeSetting("splitter_1Geo", self.splitter_1.saveGeometry());
-        sett.storeSetting("splitter_2Sizes", self.splitter_2.saveState());
+        sett.storeSetting("splitter_1Sizes", self.splitter_1.saveState())
+        sett.storeSetting("splitter_1Geo", self.splitter_1.saveGeometry())
+        sett.storeSetting("splitter_2Sizes", self.splitter_2.saveState())
         sett.storeSetting('images/last_filename', self.image_name)
         sett.storeSetting('images/zoom_factor', self.getZoomFactor())
         row_l = self.comboBoxLang.currentIndex()

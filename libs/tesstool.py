@@ -20,16 +20,27 @@ VERSION = ''
 # Define Page Iterator Levels
 RIL = ['RIL_BLOCK', 'RIL_PARA', 'RIL_TEXTLINE', 'RIL_WORD', 'RIL_SYMBOL']
 
-#Page Segmentation Modes
-PSM = ['PSM_OSD_ONLY', 'PSM_AUTO_OSD', 'PSM_AUTO_ONLY', 'PSM_AUTO',
-'PSM_SINGLE_COLUMN', 'PSM_SINGLE_BLOCK_VERT_TEXT', 'PSM_SINGLE_BLOCK',
-'PSM_SINGLE_LINE', 'PSM_SINGLE_WORD', 'PSM_CIRCLE_WORD', 'PSM_SINGLE_CHAR',
-'PSM_SPARSE_TEXT', 'PSM_SPARSE_TEXT_OSD']
+# Page Segmentation Modes
+PSM = [
+    'PSM_OSD_ONLY',
+    'PSM_AUTO_OSD',
+    'PSM_AUTO_ONLY',
+    'PSM_AUTO',
+    'PSM_SINGLE_COLUMN',
+    'PSM_SINGLE_BLOCK_VERT_TEXT',
+    'PSM_SINGLE_BLOCK',
+    'PSM_SINGLE_LINE',
+    'PSM_SINGLE_WORD',
+    'PSM_CIRCLE_WORD',
+    'PSM_SINGLE_CHAR',
+    'PSM_SPARSE_TEXT',
+    'PSM_SPARSE_TEXT_OSD']
 
 (PSM_OSD_ONLY, PSM_AUTO_OSD, PSM_AUTO_ONLY, PSM_AUTO, PSM_SINGLE_COLUMN,
  PSM_SINGLE_BLOCK_VERT_TEXT, PSM_SINGLE_BLOCK, PSM_SINGLE_LINE,
  PSM_SINGLE_WORD, PSM_CIRCLE_WORD, PSM_SINGLE_CHAR, PSM_SPARSE_TEXT,
  PSM_SPARSE_TEXT_OSD, PSM_COUNT) = map(ctypes.c_int, range(14))
+
 
 def iter_ptr_list(plist):
     """ Iterator for pointer list - to parse C array
@@ -40,6 +51,7 @@ def iter_ptr_list(plist):
             raise StopIteration
         yield plist[i]
 
+
 def get_tessdata_prefix():
     """Return prefix for tessdata based on enviroment variable
     """
@@ -48,13 +60,14 @@ def get_tessdata_prefix():
         tessdata_prefix = '../'
     return tessdata_prefix
 
+
 def get_tesseract(search_path='.'):
     """ Get tesseract handle
     """
     if sys.platform == 'win32':
         lib_name = 'libtesseract303'
         _path = os.environ['PATH']
-        for _dir in ['', 'win32', '..' , '..\win32']:
+        for _dir in ['', 'win32', '..', '..\win32']:
             temp_path = os.path.join(search_path, _dir)
             os.environ['PATH'] = _path + os.pathsep + temp_path
             lib_path = find_library(lib_name)
@@ -81,6 +94,7 @@ def get_tesseract(search_path='.'):
     VERSION = get_version(tesseract)
     return tesseract
 
+
 def get_version(tesseract=None):
     """ Get tesseract version
     """
@@ -93,7 +107,8 @@ def get_version(tesseract=None):
     tesseract.TessVersion.argtypes = []
     return tesseract.TessVersion().decode('utf-8')
 
-def get_list_of_langs(tesseract=None, api = None):
+
+def get_list_of_langs(tesseract=None, api=None):
     """ Get tesseract version
     """
     if not tesseract:
