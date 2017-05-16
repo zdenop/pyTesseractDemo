@@ -1,5 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
+
 """
 Created on Mon Apr 28 10:10:00 2014
 
@@ -8,11 +9,10 @@ Created on Mon Apr 28 10:10:00 2014
 
 from sys import platform
 from os import path, environ, name
-from PyQt4.QtCore import QSettings, QVariant
-from PyQt4.QtGui import QDesktopServices
+from PyQt5.QtCore import QSettings, QVariant, QStandardPaths
 
-APPGROUP = u'tesseract'
-conFile = u'pyTesseractDemo.ini'
+APPGROUP = 'tesseract'
+conFile = 'pyTesseractDemo.ini'
 
 def configFile():
     if platform.startswith("win") or name == "nt":
@@ -28,9 +28,6 @@ def configFile():
             appdata = path.join(environ['APPDATA'], )
     else:
         appdata = path.expanduser(path.join("~", ".config/"))
-    appdata = unicode(appdata)
-    #appdata = QDesktopServices.storageLocation(QDesktopServices.DataLocation)
-    #config = unicode(appdata + QDir.separator() + conFile')
     return path.join(appdata, APPGROUP, conFile)
 
 def storeSetting(name, value):
@@ -47,32 +44,31 @@ def readSetting(name):
     if name in ('geometry', 'state', 'splitter_1Sizes', 'splitter_2Sizes'):
         return settings.value(name)
     elif name == 'images/input_dir':
-        return str(settings.value(name,\
-                              QDesktopServices.storageLocation(
-                              QDesktopServices.DesktopLocation)).toString())
+        return str(settings.value(name, QStandardPaths.standardLocations(
+                                        QStandardPaths.DesktopLocation)))
     elif name == 'images/last_filename':
-        return str(settings.value(name, r'images/phototest.tif').toString())
+        return str(settings.value(name, r'images/phototest.tif'))
     elif name == 'images/zoom_factor':
-        return settings.value(name, QVariant(1.0)).toReal()[0]
+        return float(settings.value(name, QVariant(1.0)))
     elif name == 'language':
         # default value 'eng'
-        return str(settings.value(name, 'eng').toString())
+        return str(settings.value(name, 'eng'))
     else:
         # Return name value as string or empty string if name does not exist
-        return str(settings.value(name, "").toString())
+        return str(settings.value(name, ""))
 
 ##############################################################################
 def main():
     """Test module functionality
     """
-    print 'starting tests...'
-    home_dir = QDesktopServices.storageLocation(QDesktopServices.HomeLocation)
-    print 'Home dir is:', home_dir
-    print 'configFile:', configFile()
-    print 'Input durectory is: ', readSetting('images/input_dir')
-    print 'Last used filename is: ', readSetting('images/last_filename')
-    print 'language:', readSetting('language'), type(readSetting('language')),
-    print 'tests ended...'
+    print('starting tests...')
+    home_dir = QStandardPaths.standardLocations(QStandardPaths.HomeLocation)
+    print('Home dir is:', home_dir)
+    print('configFile:', configFile())
+    print('Input durectory is: ', readSetting('images/input_dir'))
+    print('Last used filename is: ', readSetting('images/last_filename'))
+    print('language:', readSetting('language'), type(readSetting('language')))
+    print('tests ended...')
 
 if __name__ == '__main__':
     main()

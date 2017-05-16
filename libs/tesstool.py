@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
 """Library with tools related to tesseract
@@ -29,7 +29,7 @@ PSM = ['PSM_OSD_ONLY', 'PSM_AUTO_OSD', 'PSM_AUTO_ONLY', 'PSM_AUTO',
 (PSM_OSD_ONLY, PSM_AUTO_OSD, PSM_AUTO_ONLY, PSM_AUTO, PSM_SINGLE_COLUMN,
  PSM_SINGLE_BLOCK_VERT_TEXT, PSM_SINGLE_BLOCK, PSM_SINGLE_LINE,
  PSM_SINGLE_WORD, PSM_CIRCLE_WORD, PSM_SINGLE_CHAR, PSM_SPARSE_TEXT,
- PSM_SPARSE_TEXT_OSD, PSM_COUNT) = map(ctypes.c_int, xrange(14))
+ PSM_SPARSE_TEXT_OSD, PSM_COUNT) = map(ctypes.c_int, range(14))
 
 def iter_ptr_list(plist):
     """ Iterator for pointer list - to parse C array
@@ -60,7 +60,7 @@ def get_tesseract(search_path='.'):
             lib_path = find_library(lib_name)
             if not lib_path is None:
                 lib_path = os.path.realpath(lib_path)
-                print "found", lib_path
+                print("found", lib_path)
                 break
     else:
         lib_name = 'libtesseract.so.3'
@@ -71,28 +71,27 @@ def get_tesseract(search_path='.'):
     except OSError:
         try:
             tesseract = ctypes.cdll.LoadLibrary(lib_path)
-        except OSError, err:
+        except OSError as err:
             print('Loading of %s failed...' % lib_name)
             print('Loading of %s failed...' % lib_path)
             print(err)
             return
 
     global VERSION
-    tesseract.TessVersion.restype = ctypes.c_char_p
-    tesseract.TessVersion.argtypes = []
-    VERSION = tesseract.TessVersion()
+    VERSION = get_version(tesseract)
     return tesseract
 
-def get_version():
+def get_version(tesseract=None):
     """ Get tesseract version
     """
-    tesseract = get_tesseract()
+    if not tesseract:
+        tesseract = get_tesseract()
     if not tesseract:
         return
 
     tesseract.TessVersion.restype = ctypes.c_char_p
     tesseract.TessVersion.argtypes = []
-    return tesseract.TessVersion()
+    return tesseract.TessVersion().decode('utf-8')
 
 def get_list_of_langs(tesseract=None, api = None):
     """ Get tesseract version
@@ -109,7 +108,11 @@ def get_list_of_langs(tesseract=None, api = None):
     tesseract.TessBaseAPIGetInitLanguagesAsString.restype = ctypes.c_char_p
     init_lang = tesseract.TessBaseAPIGetInitLanguagesAsString(api)
     if not init_lang:
-        tesseract.TessBaseAPIInit3(api, None, None)
+        try:
+            tesseract.TessBaseAPIInit3(api, None, None)
+        except OSError as error:
+            print('Can not initialize tesseract:', error)
+            return None
 
     get_langs = tesseract.TessBaseAPIGetAvailableLanguagesAsVector
     get_langs.restype = ctypes.POINTER(ctypes.c_char_p)
@@ -117,7 +120,7 @@ def get_list_of_langs(tesseract=None, api = None):
     langs = []
     if langs_p:
         for lang in iter_ptr_list(langs_p):
-            langs.append(lang)
+            langs.append(lang.decode('utf-8'))
     return sorted(langs)
 
 
@@ -126,10 +129,10 @@ def main():
     """
     version = get_version()
     if version:
-        print 'Found tesseract OCR version %s' % version
-        print 'Available languages:', get_list_of_langs()
+        print('Found tesseract OCR version %s' % version)
+        print('Available languages:', get_list_of_langs())
     else:
-        print 'Tesseract is not available'
+        print('Tesseract is not available')
 
 if __name__ == '__main__':
     main()

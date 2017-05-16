@@ -1,6 +1,5 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
-
 
 """
    Simple python demo of tesseract-ocr
@@ -8,20 +7,20 @@
 # https://www.mail-archive.com/pyqt@riverbankcomputing.com/msg20541.html
 # http://pastebin.com/DhPUgrAj
 
-__author__ = u'Zdenko Podobný <zdenop@gmail.com>'
+__author__ = 'Zdenko Podobný <zdenop@gmail.com>'
 __version__ = '0.2'
-__date__ = '01.05.2014'
+__date__ = '14.05.2017'
 
 import os
 import sys
 import ctypes
 import locale
 
-from PyQt4.QtGui import (QApplication, QMainWindow, QStyleFactory, QFileDialog,
-                         QPixmap, QColor, QPen, QBrush, QTextCursor, QStyle,
-                         QTransform)
-from PyQt4.QtCore import (Qt, QCoreApplication, pyqtSignature, SIGNAL,
-                          QVariant, QEvent)
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QStyleFactory,
+                             QFileDialog, QStyle, QGraphicsScene)
+from PyQt5.QtGui import (QTextCursor, QBrush, QColor, QTransform, QPixmap,
+                         QPen)
+from PyQt5.QtCore import (Qt, pyqtSignal, pyqtSlot, QCoreApplication, QEvent)
 
 from ui.ui_mainwindow import Ui_MainWindow
 
@@ -34,6 +33,8 @@ from libs.scene import CustomGraphicsScene
 class MainWindow(QMainWindow, Ui_MainWindow):
     """Class For MainWindow
     """
+    dropped_to_scene = pyqtSignal('QString')
+
     def __init__(self, parent=None):
         """ Constructor
         """
@@ -42,8 +43,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         QApplication.setStyle(QStyleFactory.create('cleanlooks'))
         self.setupUi(self)
         self.scene = CustomGraphicsScene()
-        self.connect(self.scene, SIGNAL("dropped_to_scene(QString)"),
-                     self.load_image)
+        self.scene.dropped.connect(self.load_image)
         self.graphicsView.setScene(self.scene)
         self.scene.installEventFilter(self)
         self.graphicsView.setBackgroundBrush(QBrush(Qt.gray, Qt.BDiagPattern))
@@ -54,7 +54,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.actionZoomOut.triggered.connect(self.zoomOut)
         self.actionZoomIn.triggered.connect(self.zoomIn)
         self.actionZoomTo1.triggered.connect(self.zoomTo1)
-        self.connect(self.actionZoomFit, SIGNAL('triggered()'), self.zoomFit)
+        self.actionZoomFit.triggered.connect(self.zoomFit)
 
         # Initialize variables and pointers
         self.box_data = []
@@ -73,8 +73,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if self.tesseract:
             available_languages = tess.get_list_of_langs(self.tesseract,
                                                          self.api)
-            for lang in available_languages:
-                self.comboBoxLang.addItem(lang, lang)
+            if available_languages:
+                for lang in available_languages:
+                    self.comboBoxLang.addItem(lang, lang)
             current_index = self.comboBoxLang.findData(self.lang)
             if current_index:
                 self.comboBoxLang.setCurrentIndex(current_index)
@@ -91,18 +92,27 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # Read settings and set default values
         geometry = sett.readSetting('settings_geometry')
         if geometry is not None:
-            self.restoreGeometry(QVariant(geometry).toByteArray())
+            try:
+                self.restoreGeometry(geometry)
+            except TypeError:
+                pass
         else:
             self.resize(1150, 950)
         state = sett.readSetting('state')
         if state is not None:
-            self.restoreState(QVariant(state).toByteArray())
+            self.restoreState(state)
         sp_1_state = sett.readSetting('splitter_1Sizes')
         if sp_1_state is not None:
-            self.splitter_1.restoreState(QVariant(sp_1_state).toByteArray())
+            try:
+                self.splitter_1.restoreState(sp_1_state)
+            except TypeError:
+                pass
         sp_2_state = sett.readSetting('splitter_2Sizes')
         if sp_2_state is not None:
-            self.splitter_2.restoreState(QVariant(sp_2_state).toByteArray())
+            try:
+                self.splitter_2.restoreState(sp_2_state)
+            except TypeError:
+                pass
         psm = sett.readSetting('PSM')
         if psm:
             current_index = self.comboBoxPSM.findData(psm)
@@ -136,8 +146,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         #   ../../tesseract-ocr/ccutil/globaloc.cpp, line 75
         locale.setlocale(locale.LC_ALL, 'C')
         retc = self.tesseract.TessBaseAPIInit3(self.api,
-                                                   tessdata_prefix,
-                                                   self.lang)
+                                                   tessdata_prefix.encode(),
+                                                   self.lang.encode())
         # Restore saved locale
         # locale.setlocale(locale.LC_ALL, current_locale)
         if (retc):
@@ -149,7 +159,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                       (tess.VERSION, self.lang))
 
 
-    @pyqtSignature('')
+    @pyqtSlot()
     def on_pushButtonShow_pressed(self):
         """Display rectangles
         """
@@ -210,7 +220,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.leptonica.boxaGetBox.argtypes = []
         n_boxes = len(self.box_data)
         if n_boxes:
-            for idx in xrange(n_boxes):
+            for idx in range(n_boxes):
                 self.scene.removeItem(self.box_data[idx])
 
         # Display items and print its info
@@ -238,7 +248,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         QCoreApplication.processEvents()
         self.box_data = box_items
 
-    @pyqtSignature('')
+    @pyqtSlot()
     def on_pushButtonLoad_pressed(self):
         """Load Image
         """
@@ -250,27 +260,32 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     'All files (*.*)')
 
         if not image:
-            self.show_msg(u'File was not selected…')
+            self.show_msg('File was not selected…')
             return
-        self.load_image(image)
-        sett.storeSetting('images/input_dir', os.path.dirname(str(image)));
+        if isinstance(image, tuple):
+            filename = image[0]
+        else:
+            filename = image
+        self.load_image(filename)
+        sett.storeSetting('images/input_dir', os.path.dirname(filename));
 
-    @pyqtSignature('')
+    @pyqtSlot()
     def on_pushButtonRestart_pressed(self):
         """Restart program
         """
         python = sys.executable
         os.execl(python, python, * sys.argv)
 
+    @pyqtSlot('QString')
     def load_image(self, filename):
         """Load image to scene and create PIX
         """
+        self.image_name = filename
         self.scene.clear()
         self.zoomTo1()
-        self.image_name = str(filename)  # filename must be c-string
         # Read image with leptonica => create PIX structure and report image
         # size info
-        self.pix_image = self.leptonica.pixRead(self.image_name)
+        self.pix_image = self.leptonica.pixRead(self.image_name.encode())
         self.image_width = self.leptonica.pixGetWidth(self.pix_image)
         self.image_height = self.leptonica.pixGetHeight(self.pix_image)
         self.show_msg("image size: %dx%d, resolution %dx%d" % \
@@ -309,15 +324,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         sett.storeSetting('images/last_filename', self.image_name)
         sett.storeSetting('images/zoom_factor', self.getZoomFactor())
         row_l = self.comboBoxLang.currentIndex()
-        lang = self.comboBoxLang.itemData(row_l).toString()
+        lang = self.comboBoxLang.itemData(row_l)
         if lang:
             sett.storeSetting('language', lang)
         row_p = self.comboBoxPSM.currentIndex()
-        sett.storeSetting('PSM',
-                          self.comboBoxPSM.itemData(row_p).toString())
+        sett.storeSetting('PSM', self.comboBoxPSM.itemData(row_p))
         row_r = self.comboBoxRIL.currentIndex()
-        sett.storeSetting('RIL',
-                          self.comboBoxRIL.itemData(row_r).toString())
+        sett.storeSetting('RIL', self.comboBoxRIL.itemData(row_r))
         QMainWindow.closeEvent(self, event)
 
     def setZoom(self, scale):
