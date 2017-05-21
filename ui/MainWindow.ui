@@ -101,7 +101,7 @@
      <x>0</x>
      <y>0</y>
      <width>763</width>
-     <height>21</height>
+     <height>25</height>
     </rect>
    </property>
   </widget>
@@ -119,6 +119,18 @@
    <addaction name="actionZoomTo1"/>
    <addaction name="actionZoomIn"/>
    <addaction name="actionZoomOut"/>
+  </widget>
+  <widget class="QToolBar" name="toolBar">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="actionCrop"/>
   </widget>
   <action name="actionZoomFit">
    <property name="icon">
@@ -160,6 +172,15 @@
    </property>
    <property name="text">
     <string>Zoom Out</string>
+   </property>
+  </action>
+  <action name="actionCrop">
+   <property name="icon">
+    <iconset resource="../resources.qrc">
+     <normaloff>:/images/crop.png</normaloff>:/images/crop.png</iconset>
+   </property>
+   <property name="text">
+    <string>Crop</string>
    </property>
   </action>
  </widget>

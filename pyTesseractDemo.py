@@ -23,14 +23,17 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QStyleFactory,
                              QFileDialog, QStyle, QGraphicsScene)
 from PyQt5.QtGui import (QTextCursor, QBrush, QColor, QTransform, QPixmap,
                          QPen)
-from PyQt5.QtCore import (Qt, pyqtSignal, pyqtSlot, QCoreApplication, QEvent)
+from PyQt5.QtCore import (Qt, pyqtSignal, pyqtSlot, QCoreApplication, QEvent,
+                          QRectF)
 
 from ui.ui_mainwindow import Ui_MainWindow
 
 import libs.tesstool as tess
 import libs.lepttool as lept
 import libs.settings as sett
+
 from libs.scene import CustomGraphicsScene
+from libs.areaitem import AreaItem
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -62,6 +65,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # Initialize variables and pointers
         self.box_data = []
         self.pix_image = False
+        self.image = None
         self.image_width = 0
         self.image_height = 0
         self.tesseract = None
@@ -283,6 +287,63 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         python = sys.executable
         os.execl(python, python, * sys.argv)
 
+    @pyqtSlot()
+    def on_actionCrop_triggered(self):
+        """Crop image trigger
+        """
+        self.show_msg("Started cropping: adjust area")
+        self.area = AreaItem(0, 0, 300, 150)
+        self.area.areaColor = QColor(0, 155, 0, 75)
+        self.area.selectedChange.connect(self.areaItemChanges)
+        self.scene.addItem(self.area)
+
+    @pyqtSlot('QString')
+    def areaItemChanges(self, itemAction):
+        if itemAction == 'removeArea':
+            self.show_msg("Removing area")
+            self.removeSceneItem()
+        elif itemAction == 'crop2Area':
+            self.crop2Area()
+
+    def removeSceneItem(self):
+        """
+        Remove items from scene
+        """
+        items = self.scene.selectedItems()
+        if len(items):
+            while items:
+                item = items.pop()
+                self.scene.removeItem(item)
+                del item
+
+    def crop2Area(self):
+        """Perform crop action on Area item
+        """
+        xb = int(self.area.pos().x())
+        yb = int(self.area.pos().y())
+        wb = int(self.area.rect().width())
+        hb = int(self.area.rect().height())
+        self.show_msg("Cropping area: {}, {}, {}, {}".format(xb, yb, wb, hb))
+        box = self.leptonica.boxCreate(xb, yb, wb, hb)
+        cropped = self.leptonica.pixClipRectangle(self.pix_image, box, None)
+        qimage = lept.pix_to_qimage(self.leptonica, cropped)
+        pixmap = QPixmap(qimage)
+        if pixmap:
+            self.scene.removeItem(self.image)
+            del self.image
+            self.image = self.scene.addPixmap(pixmap)
+            self.scene.setSceneRect(QRectF(pixmap.rect()))
+            self.pix_image = cropped
+            self.image_width = self.leptonica.pixGetWidth(self.pix_image)
+            self.image_height = self.leptonica.pixGetHeight(self.pix_image)
+            self.removeSceneItem()
+            self.show_msg("New image size: %dx%d, resolution %dx%d" %
+                          (self.image_width,
+                           self.image_height,
+                           self.leptonica.pixGetXRes(self.pix_image),
+                           self.leptonica.pixGetYRes(self.pix_image)
+                           ))
+
     @pyqtSlot('QString')
     def load_image(self, filename):
         """Load image to scene and create PIX
@@ -304,9 +365,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.box_data = []
         qimage = lept.pix_to_qimage(self.leptonica, self.pix_image)
         if not qimage:  # fallback solution
-            self.scene.addPixmap(QPixmap(filename))
+            pixmap = QPixmap(filename)
         else:
-            self.scene.addPixmap(QPixmap(qimage))
+            pixmap = QPixmap(qimage)
+        self.image = self.scene.addPixmap(pixmap)
+        self.scene.setSceneRect(QRectF(pixmap.rect()))
         self.setWindowTitle(
             'Analyze & ORC image with tesseract and '
             'leptonica :: %s' %
