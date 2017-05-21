@@ -1,22 +1,17 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Copyright © Zdenko Podobný 2014-2017
+# Licensed under the terms of the MIT License
 
-"""Library with tools related to leptonica
-
+""" Library with tools related to leptonica
     Function pix_to_qimage based on Tom Powers code
 """
-
-__author__ = 'Zdenko Podobný <zdenop@gmail.com>'
-__version__ = '0.2'
-__date__ = '03.05.2014'
-
 
 import os
 import sys
 import ctypes
 
 from PyQt5.QtGui import (QImage, qRgb)
-
 
 LIBPATH = "/usr/local/lib64/"
 LIBPATH_W = r'win32'
@@ -26,8 +21,9 @@ LIBPATH_W = r'win32'
 # B&W Color Table.
 _bwCT = [qRgb(255, 255, 255), qRgb(0, 0, 0)]
 
-#Grayscale Color Table.
+# Grayscale Color Table.
 _grayscaleCT = [qRgb(i, i, i) for i in range(256)]
+
 
 class BOX(ctypes.Structure):
     """ Leptonica box structure
@@ -40,7 +36,9 @@ class BOX(ctypes.Structure):
         ("refcount", ctypes.c_uint32)
     ]
 
+
 BOX_PTR_T = ctypes.POINTER(BOX)
+
 
 def get_leptonica():
     """ Get leptonica handle
@@ -51,7 +49,7 @@ def get_leptonica():
         curr_dir = os.path.dirname(os.path.realpath(__file__))
         os.environ["PATH"] += os.pathsep + LIBPATH_W
         os.environ["PATH"] += os.pathsep + "{0}\{1}".format(curr_dir,
-                                                               LIBPATH_W)
+                                                            LIBPATH_W)
     else:
         leptlib = LIBPATH + "liblept.so.4.0.0"
         leptlib_alt = 'liblept.so'
@@ -69,6 +67,7 @@ def get_leptonica():
             print(err)
             return None
     return leptonica
+
 
 def pix_to_qimage(leptonica, pix_image):
     """ Convert leptonica PIX to QT QImage
@@ -107,6 +106,7 @@ def pix_to_qimage(leptonica, pix_image):
         return none
     return result.rgbSwapped()
 
+
 def get_version(leptonica=None):
     """ Get tesseract version
     """
@@ -117,6 +117,7 @@ def get_version(leptonica=None):
         leptonica.getLeptonicaVersion.argtypes = []
         return leptonica.getLeptonicaVersion().decode('utf-8')
     return None
+
 
 def get_image_support(leptonica=None):
     """ Get tesseract version
@@ -145,7 +146,7 @@ def main():
     print('Found %s' % leptonica_version)
     print(get_image_support(leptonica))
 
-    if  os.path.exists(file_name) == False:
+    if os.path.exists(file_name) == False:
         print("File {} does not exists. There is nothing to check."
               .format(file_name))
     pix_image = leptonica.pixRead(file_name.encode())

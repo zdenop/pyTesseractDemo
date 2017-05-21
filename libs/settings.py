@@ -1,10 +1,9 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Copyright © Zdenko Podobný 2014-2017
+# Licensed under the terms of the MIT License
 
-"""
-Created on Mon Apr 28 10:10:00 2014
-
-@author: zdenko.podobny
+""" Settings functions
 """
 
 from sys import platform
@@ -14,14 +13,15 @@ from PyQt5.QtCore import QSettings, QVariant, QStandardPaths
 APPGROUP = 'tesseract'
 conFile = 'pyTesseractDemo.ini'
 
+
 def configFile():
     if platform.startswith("win") or name == "nt":
         try:
             import pywintypes
             try:
                 from win32com.shell import shell, shellcon
-                appdata = shell.SHGetSpecialFolderPath(0, \
-                                                        shellcon.CSIDL_APPDATA)
+                appdata = shell.SHGetSpecialFolderPath(0,
+                                                       shellcon.CSIDL_APPDATA)
             except pywintypes.com_error:
                 appdata = environ['APPDATA']
         except ImportError:
@@ -30,11 +30,13 @@ def configFile():
         appdata = path.expanduser(path.join("~", ".config/"))
     return path.join(appdata, APPGROUP, conFile)
 
+
 def storeSetting(name, value):
     """Store setting to config file
     """
     settings = QSettings(configFile(), QSettings.IniFormat)
     settings.setValue(name, QVariant(value))
+
 
 def readSetting(name):
     """Return stored setting value
@@ -45,7 +47,7 @@ def readSetting(name):
         return settings.value(name)
     elif name == 'images/input_dir':
         return str(settings.value(name, QStandardPaths.standardLocations(
-                                        QStandardPaths.DesktopLocation)))
+            QStandardPaths.DesktopLocation)))
     elif name == 'images/last_filename':
         return str(settings.value(name, r'images/phototest.tif'))
     elif name == 'images/zoom_factor':
@@ -58,6 +60,8 @@ def readSetting(name):
         return str(settings.value(name, ""))
 
 ##############################################################################
+
+
 def main():
     """Test module functionality
     """
@@ -69,6 +73,7 @@ def main():
     print('Last used filename is: ', readSetting('images/last_filename'))
     print('language:', readSetting('language'), type(readSetting('language')))
     print('tests ended...')
+
 
 if __name__ == '__main__':
     main()
