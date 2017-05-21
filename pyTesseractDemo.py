@@ -11,8 +11,8 @@
 # http://pastebin.com/DhPUgrAj
 
 __author__ = 'Zdenko Podobný <zdenop@gmail.com>'
-__version__ = '0.2'
-__date__ = '14.05.2017'
+__version__ = '0.3'
+__date__ = '21.05.2017'
 
 import os
 import sys
