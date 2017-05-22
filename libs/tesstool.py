@@ -1,12 +1,10 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Copyright © Zdenko Podobný 2014-2017
+# Licensed under the terms of the Apache License Version 2.0
 
-"""Library with tools related to tesseract
+""" Library with tools related to tesseract
 """
-
-__author__ = u'Zdenko Podobný <zdenop@gmail.com>'
-__version__ = '0.1'
-__date__ = '22.04.2014'
 
 import os
 import sys
@@ -71,7 +69,7 @@ def get_tesseract(search_path='.'):
             temp_path = os.path.join(search_path, _dir)
             os.environ['PATH'] = _path + os.pathsep + temp_path
             lib_path = find_library(lib_name)
-            if not lib_path is None:
+            if lib_path is not None:
                 lib_path = os.path.realpath(lib_path)
                 print("found", lib_path)
                 break
@@ -148,6 +146,7 @@ def main():
         print('Available languages:', get_list_of_langs())
     else:
         print('Tesseract is not available')
+
 
 if __name__ == '__main__':
     main()

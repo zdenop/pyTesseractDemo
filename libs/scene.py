@@ -1,5 +1,10 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Copyright © Zdenko Podobný 2014-2017
+# Licensed under the terms of the MIT License
+
+""" Custom QGraphicsScene
+"""
 
 from PyQt5.QtWidgets import (QGraphicsScene)
 from PyQt5.QtCore import (pyqtSignal)

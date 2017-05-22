@@ -1,10 +1,9 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Copyright © Zdenko Podobný 2014-2017
+# Licensed under the terms of the Apache License Version 2.0
 
-"""
-Created on Mon Apr 28 10:10:00 2014
-
-@author: zdenko.podobny
+""" Settings functions
 """
 
 from sys import platform
@@ -74,6 +73,7 @@ def main():
     print('Last used filename is: ', readSetting('images/last_filename'))
     print('language:', readSetting('language'), type(readSetting('language')))
     print('tests ended...')
+
 
 if __name__ == '__main__':
     main()

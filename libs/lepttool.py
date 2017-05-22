@@ -1,22 +1,17 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Copyright © Zdenko Podobný 2014-2017
+# Licensed under the terms of the Apache License Version 2.0
 
-"""Library with tools related to leptonica
-
+""" Library with tools related to leptonica
     Function pix_to_qimage based on Tom Powers code
 """
-
-__author__ = 'Zdenko Podobný <zdenop@gmail.com>'
-__version__ = '0.2'
-__date__ = '03.05.2014'
-
 
 import os
 import sys
 import ctypes
 
 from PyQt5.QtGui import (QImage, qRgb)
-
 
 LIBPATH = "/usr/local/lib64/"
 LIBPATH_W = r'win32'
@@ -40,6 +35,7 @@ class BOX(ctypes.Structure):
         ("h", ctypes.c_int32),
         ("refcount", ctypes.c_uint32)
     ]
+
 
 BOX_PTR_T = ctypes.POINTER(BOX)
 
