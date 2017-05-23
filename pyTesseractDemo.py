@@ -404,6 +404,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         sett.storeSetting('PSM', self.comboBoxPSM.itemData(row_p))
         row_r = self.comboBoxRIL.currentIndex()
         sett.storeSetting('RIL', self.comboBoxRIL.itemData(row_r))
+        if self.api:
+            self.tesseract.TessBaseAPIEnd(self.api)
         QMainWindow.closeEvent(self, event)
 
     def setZoom(self, scale):

@@ -109,8 +109,10 @@ def get_version(tesseract=None):
 def get_list_of_langs(tesseract=None, api=None):
     """ Get tesseract version
     """
+    not_inited = False
     if not tesseract:
         tesseract = get_tesseract()
+        not_inited = True
         if not tesseract:
             return
     if not api:
@@ -134,6 +136,8 @@ def get_list_of_langs(tesseract=None, api=None):
     if langs_p:
         for lang in iter_ptr_list(langs_p):
             langs.append(lang.decode('utf-8'))
+    if not_inited:
+        tesseract.TessBaseAPIEnd(api)
     return sorted(langs)
 
 
