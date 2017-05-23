@@ -23,10 +23,7 @@ class CustomGraphicsScene(QGraphicsScene):
         event.acceptProposedAction()
 
     def dropEvent(self, event):
-        print("Drop fired!")
         urls = event.mimeData().urls()
-        print("urls", urls)
         if urls.count:
             fname = urls[0].toLocalFile()
-            print("fname", fname)
             self.dropped.emit(fname)
