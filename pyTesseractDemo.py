@@ -22,7 +22,7 @@ import locale
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QStyleFactory,
                              QFileDialog, QStyle, QGraphicsScene)
 from PyQt5.QtGui import (QTextCursor, QBrush, QColor, QTransform, QPixmap,
-                         QPen)
+                         QPen, QIcon)
 from PyQt5.QtCore import (Qt, pyqtSignal, pyqtSlot, QCoreApplication, QEvent,
                           QRectF)
 
@@ -480,10 +480,13 @@ def main():
     """Start GUI
     """
     app = QApplication([])
+    if sys.platform == "win32":
+        myappid = 'tesseract.python.demo.{}'.format(__version__)  # arbitrary string
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+    app.setWindowIcon(QIcon(':/images/appIcon'))
     window = MainWindow()
     window.show()
     app.exec_()
-
 
 if __name__ == '__main__':
     main()
