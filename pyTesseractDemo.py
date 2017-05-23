@@ -61,6 +61,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.actionZoomIn.triggered.connect(self.zoomIn)
         self.actionZoomTo1.triggered.connect(self.zoomTo1)
         self.actionZoomFit.triggered.connect(self.zoomFit)
+        self.actionZoomToWidth.triggered.connect(self.zoomToWidth)
 
         # Initialize variables and pointers
         self.box_data = []
@@ -432,6 +433,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             zoomFactor = float(viewHeight / self.image_height)
         else:
             zoomFactor = float(viewWidth / self.image_width)
+        self.setZoom(zoomFactor)
+
+    def zoomToWidth(self):
+        """Zoom image to fit in graphicsView window
+        """
+        if not self.image_width:
+            return
+        viewWidth = self.graphicsView.viewport().width()
+        zoomFactor = float(viewWidth / self.image_width)
         self.setZoom(zoomFactor)
 
     def zoomTo1(self):

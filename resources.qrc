@@ -3,7 +3,8 @@
     <file alias="zoom_1 to_1.png">images/Zoom-Refresh.png</file>
     <file alias="crop.png">images/transform-crop-icon.png</file>
     <file alias="test_image.png">images/phototest.tif</file>
-    <file alias="zoom_fit.png">images/Zoom-Extend.png</file>
+    <file alias="zoom_fit.png">images/Actions-zoom-fit-best-icon.png</file>
+    <file alias="zoom_width.png">images/Actions-zoom-fit-width-icon.png</file>
     <file alias="zoom_in.png">images/Zoom-In.png</file>
     <file alias="zoom_out.png">images/Zoom-Out.png</file>
     <file alias="appIcon">images/logo.png</file>
